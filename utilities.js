@@ -69,6 +69,18 @@
 				!obj.propertyIsEnumerable('length');
 		};
 	}
+	
+	if (!Array.prototype.unique)
+	{
+		Array.prototype.unique = function() {
+			return this.reduce(function(a, b) {
+				if (a.indexOf(b) < 0) {
+					a.push(b);
+				}
+				return a;
+			}, []);
+		}
+	}
 
 	if (!Number.isNumber)
 	{
