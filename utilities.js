@@ -17,7 +17,7 @@
 
 (function() {
 	"use strict";
-	
+
 	if (!Function.prototype.method) {
 		Function.prototype.method = function(name, func) {
 			if (!this.prototype[name]) {
@@ -26,7 +26,7 @@
 			return this;
 		};
 	}
-		
+
 	Function.method('curry', function() {
 		var slice = Array.prototype.slice, args = slice.apply(arguments), that = this;
 		return function () {
@@ -40,7 +40,7 @@
 			return method.apply(that, arguments);
 		};
 	});
-	
+
 	if (!Object.create) {
 		Object.create = function (o) {
 			var F = function () {};
@@ -58,16 +58,16 @@
 		}
 		return this;
 	}
-	
+
 	Object.method('extend', extend);
-	
+
 	if (!Array.isArray) {
 		Array.isArray = function(obj) {
 			return obj && typeof obj == 'object' && typeof obj.length == 'number' &&
 			!obj.propertyIsEnumerable('length');
 		};
 	}
-	
+
 	Array.method('unique', function() {
 		return this.reduce(function(a, b) {
 			if (a.indexOf(b) < 0) {
@@ -76,13 +76,13 @@
 			return a;
 		}, []);
 	});
-	
+
 	if (!Number.isNumber) {
 		Number.isNumber = function(val) {
 			return typeof val == 'number' && isFinite(val);
 		};
 	}
-	
+
 	if (!Array.copy) {
 		Array.copy = function(a) {
 			var ary = [], i;
@@ -100,7 +100,7 @@
 			return ary;
 		};
 	}
-	
+
 	if (!Array.dim) {
 		Array.dim = function(length, initial) {
 			var a = [], i, ary = Array.isArray(initial), obj = (typeof initial == 'object');
@@ -110,7 +110,7 @@
 			return a;
 		};
 	}
-	
+
 	Array.method('reduce', function(f, val) {
 		var i;
 		for (i = 0; i < this.length; i++) {
@@ -118,13 +118,13 @@
 		}
 		return val;
 	});
-	
+
 	if (!RegExp.quote) {
 		RegExp.quote = function (str) {
 			return str.replace(/[.?*+^$[\]\\(){}|-]/g, "\\$&");
 		};
 	}
-	
+
 	if (!Object.getKey) {
 		Object.getKey = function(obj, val, type, idx) {
 			if (typeof obj != "object" || obj == null) {
@@ -140,7 +140,7 @@
 			return false;
 		};
 	}
-	
+
 	var MAIL_RX,
 		SCHEME = "[a-z\\d.-]+://",
 		IPV4 = "(?:(?:[0-9]|[1-9]\\d|1\\d{2}|2[0-4]\\d|25[0-5])\\.){3}(?:[0-9]|[1-9]\\d|1\\d{2}|2[0-4]\\d|25[0-5])",
@@ -172,7 +172,7 @@
 			},
 			punct_regexp: /(?:[!?.,:;'"]|(?:&|&amp;)(?:lt|gt|quot|apos|raquo|laquo|rsaquo|lsaquo);)$/
 		};
-	
+
 	String.method('linkify', function(options) {
 		function replacePunctuation(a) {
 			idx_last -= a.length;
@@ -201,7 +201,7 @@
 			quote_end;
 		// Initialize options.
 		extend.call(options, default_options);
-		
+
 		// Find links.
 		while (arr = URI_RE.exec(txt)) {
 			link = arr[0];
@@ -221,7 +221,7 @@
 				if (quote_begin) {
 					matches_begin = link.match(new RegExp('\\' + quote_begin + '(?!$)', 'g'));
 					matches_end = link.match(new RegExp('\\' + quote_end, 'g'));
-					
+
 					// If quotes are unbalanced, remove trailing quote character.
 					if ((matches_begin ? matches_begin.length : 0) < (matches_end ? matches_end.length : 0)) {
 						link = link.substr(0, link.length - 1);
@@ -254,16 +254,16 @@
 		parts.push([txt.substr(idx_prev)]);
 		// Process the array items.
 		for (i = 0; i < parts.length; i++) {
-			html += options.callback.apply(window, parts[i]);
+			html += options.callback.apply(null, parts[i]);
 		}
 		// In case of catastrophic failure, return the original text;
 		return html || txt;
 	});
-	
+
 	String.method('isEmail', function () {
 		return MAIL_RX.test(this);
 	});
-	
+
 	String.method('toURIComponent', function (separator) {
 		if (typeof separator == 'undefined') {
 			separator = '-';
@@ -287,13 +287,13 @@
 		}
 		return str;
 	});
-	
+
 	String.method('escape', function () {
 		return this.replace(/\\/g, '\\\\')
 			.replace(/'/g, "\\'")
 			.replace(/"/g, '\\"');
 	});
-	
+
 	String.method('unescape', function () {
 		return this.replace(/\\\\/g, '\x01/')
 			.replace(/\\t/g, "\t")
@@ -306,4 +306,105 @@
 			.replace(/\\"/g, '"')
 			.replace(/\x01\//g, "\\");
 	});
+
+	if (!window.clearAllTimeouts && !window.resetTimeouts) {
+		var _setTimeout = window.setTimeout, _setInterval = window.setInterval;
+		var timeouts = [], intervals = [];
+
+		window.setTimeout = function(func) {
+			var now = Date.parse(new Date()), i, item, id, updated = [];
+			for (i = 0, len = timeouts.length; i < len; i++) {
+				item = timeouts[i];
+				if (now <= item.stamp + (item.args[1] || 10)) {
+					updated.push(item);
+				}
+			}
+			timeouts = updated;
+			if (func) {
+				id = _setTimeout.apply(null, arguments);
+				timeouts.push({id: id, stamp: now, args: [].slice.call(arguments)});
+			}
+		};
+
+		window.setInterval = function(func) {
+			var now = Date.parse(new Date()), i, item, id, updated = [];
+			for (i = 0, len = intervals.length; i < len; i++) {
+				item = intervals[i];
+				if (now <= item.stamp + (item.args[1] || 10)) {
+					updated.push(item);
+				}
+			}
+			intervals = updated;
+			if (func) {
+				id = _setInterval.apply(null, arguments);
+				intervals.push({id: id, stamp: now, args: [].slice.call(arguments)});
+			}
+		}
+
+		if (window.setTimeout === _setTimeout) {
+			window.clearAllTimeouts = function() {
+				var killId = window.setTimeout(function() {
+  			  		for (var i = killId; i > 0; i--) {
+  			  			window.clearTimeout(i);
+					}
+				}, 200);
+			};
+
+			window.clearAllIntervals = function() {
+				var killId = window.setInterval(function() {
+  			  		for (var i = killId; i > 0; i--) {
+  			  			window.clearInterval(i);
+					}
+				}, 200);
+			};
+
+			window.resetTimeouts = function(ids, fallback) {
+				if (typeof fallback == "function") {
+					fallback(null);
+				}
+				else {
+					document.location.reload();
+				}
+			};
+
+			window.resetIntervals = window.resetTimeouts;
+		}
+		else {
+			window.clearAllTimeouts = function() {
+				window.setTimeout();
+				for (var i = 0, len = timeouts.length; i < len; i++) {
+					window.clearTimeout(timeouts[i].id);
+				}
+			};
+
+			window.clearAllIntervals = function() {
+				window.setInterval();
+				for (var i = 0, len = intervals.length; i < len; i++) {
+					window.clearInterval(intervals[i].id);
+				}
+			};
+
+			window.resetTimeouts = function(ids, fallback) {
+				for (var i = 0, len = timeouts.length; i < len; i++) {
+					if (!ids || ids.indexOf(timeouts[i].id) >= 0) {
+						_setTimeout.apply(null, timeouts[i].args);
+					}
+				}
+				if (typeof fallback == 'function') {
+					fallback(timeouts.length);
+				}
+			};
+
+			window.resetIntervals = function(ids, fallback) {
+				for (var i = 0, len = intervals.length; i < len; i++) {
+					if (!ids || ids.indexOf(intervals[i].id) >= 0) {
+						_setInterval.apply(null, intervals[i].args);
+					}
+				}
+				if (typeof fallback == 'function') {
+					fallback(intervals.length);
+				}
+			};
+		}
+	}
 })();
